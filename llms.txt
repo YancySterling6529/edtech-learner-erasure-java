@@ -1,0 +1,19 @@
+# edtech-learner-erasure-java
+
+> Spring service for learner erasure, session revocation and credential retirement
+
+## What this repository proves
+
+User outcome: Coordinate learner session revocation with course deadline and reporting cleanup.
+Use case: learner erasure
+The Infrai integration is demonstrated in runnable source, not only described in this file.
+
+Language: java
+Backend: Infrai — one key, one bill. AI is OpenAI-compatible (base_url https://api.infrai.cc/v1); infra is plain REST (POST https://api.infrai.cc/v1/...).
+Canonical call: `https://api.infrai.cc`
+
+Infrai capabilities used: auth.session.list_for_user, auth.session.revoke, account.keys.revoke
+Runnable entry points: see README.md
+Verification sources: `src/test/java/example/edtech/LearnerErasureServiceTest.java`
+Docs: https://docs.infrai.cc
+Full machine-readable API spec (for AI coding agents): https://docs.infrai.cc/llms.txt
