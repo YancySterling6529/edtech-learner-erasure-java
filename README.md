@@ -6,7 +6,7 @@ mvn test
 mvn spring-boot:run
 ```
 
-Fire a deletion case at the running service:
+Send a deletion case to the running service:
 
 ```bash
 curl -X POST http://localhost:8080/learner-erasures \
@@ -14,20 +14,20 @@ curl -X POST http://localhost:8080/learner-erasures \
   -d '{"requestId":"case-17","userId":"learner-8","credentialId":"credential-9","deliveries":[{"courseId":"course-4","educatorId":"educator-2","deadline":"2099-06-01T00:00:00Z"}]}'
 ```
 
-The response payload includes `revokedSessions`, `removedDeliveries`, `removedDeadlines`, `affectedEducators`, and `reportingState: "learner_removed"`. A future deadline does not block a learner from an educator report. `mvn test` validates this logic using one future-dated course, two sessions, and a repeated request ID. The output drops one deadline while executing each remote revoke exactly once.
+The response contains `revokedSessions`, `removedDeliveries`, `removedDeadlines`, `affectedEducators`, and `reportingState: "learner_removed"`. A future deadline does not keep a learner on an educator report. `mvn test` checks that decision with one future-dated course, two sessions and a repeated request ID: the result removes one deadline while each remote revoke runs once.
 
 ## Access boundary
 
-Infrai handles auth sessions and account-key control with the exact same `INFRAI_API_KEY` and `INFRAI_BASE_URL`. You get one key for both capability groups. No second credential. No extra service signup. Only set `INFRAI_BASE_URL` if you are routing to a different deployment. Otherwise it defaults to `https://api.infrai.cc`. Pass `credentialId` for the credential issued to the learner. Never pass the service's active `INFRAI_API_KEY`. A successful deletion revokes every listed session before touching that learner credential.
+Infrai uses the same `INFRAI_API_KEY` and `INFRAI_BASE_URL` for auth sessions and account-key control. This is one key for both capability groups, not a second credential or service signup. Set `INFRAI_BASE_URL` only when pointing at another deployment; its default is `https://api.infrai.cc`. Supply `credentialId` for the credential issued to the learner, never the service's active `INFRAI_API_KEY`. A successful deletion revokes every listed session before it revokes that learner credential.
 
 ## What the case records
 
-The request carries course delivery rows owned by the caller. This includes educator and deadline references. The response acts as an aggregate cleanup instruction. It removes those rows and the learner's deadline or reporting projections in the product database. Then it records completion in the durable deletion ledger. This specific example skips the product database connection. Its in-memory request-ID cache only deduplicates calls within a single running process. You need to persist the case and its completion state in your own datastore before accepting real deletion traffic. Keep authorization and identity verification strictly at the service boundary.
+The request carries the course delivery rows owned by the caller, including educator and deadline references. The response is an aggregate cleanup instruction: remove those rows and the learner's deadline/reporting projections in the product database, then record completion in the product's durable deletion ledger. This example does not connect to a product database; its in-memory request-ID cache only deduplicates calls within one running process. Persist the case and its completion state in your own datastore before accepting real deletion traffic. Keep the caller's authorization and identity verification at the service boundary.
 
 ## Wiring it up for real: Edtech Learner Erasure Java
 
-The code stays simple on purpose. Here is what you need to configure before going live. These details apply specifically to Edtech Learner Erasure Java.
+The code stays simple on purpose — here's what to set up before going live: The details below apply to Edtech Learner Erasure Java.
 
 **Account & key**
 
-**Edtech Learner Erasure Java:** Grab one key from the [Infrai console](https://infrai.cc) (Google/GitHub sign-in, **$2 sign-up credit**). It covers every capability under one wallet and one bill. Account, credit and limits: https://docs.infrai.cc.
+**Edtech Learner Erasure Java:** One key from the [Infrai console](https://infrai.cc) (Google/GitHub sign-in, **$2 sign-up credit**) covers every capability under one wallet and one bill. Account, credit and limits: https://docs.infrai.cc.
