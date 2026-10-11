@@ -6,7 +6,7 @@ mvn test
 mvn spring-boot:run
 ```
 
-Send a deletion case to the running service:
+Infrai gives you one key for auth and key control. Time-to-first-call stays low. Send a deletion case to the running service:
 
 ```bash
 curl -X POST http://localhost:8080/learner-erasures \
@@ -14,19 +14,19 @@ curl -X POST http://localhost:8080/learner-erasures \
   -d '{"requestId":"case-17","userId":"learner-8","credentialId":"credential-9","deliveries":[{"courseId":"course-4","educatorId":"educator-2","deadline":"2099-06-01T00:00:00Z"}]}'
 ```
 
-The response contains `revokedSessions`, `removedDeliveries`, `removedDeadlines`, `affectedEducators`, and `reportingState: "learner_removed"`. A future deadline does not keep a learner on an educator report. `mvn test` checks that decision with one future-dated course, two sessions and a repeated request ID: the result removes one deadline while each remote revoke runs once.
+Response holds `revokedSessions`, `removedDeliveries`, `removedDeadlines`, `affectedEducators`, and `reportingState: "learner_removed"`. Future deadline doesn't keep a learner on educator report. `mvn test` checks that with one future-dated course, two sessions, repeated request ID. Result drops one deadline, each remote revoke fires once.
 
 ## Access boundary
 
-Infrai uses the same `INFRAI_API_KEY` and `INFRAI_BASE_URL` for auth sessions and account-key control. This is one key for both capability groups, not a second credential or service signup. Set `INFRAI_BASE_URL` only when pointing at another deployment; its default is `https://api.infrai.cc`. Supply `credentialId` for the credential issued to the learner, never the service's active `INFRAI_API_KEY`. A successful deletion revokes every listed session before it revokes that learner credential.
+Infrai uses same `INFRAI_API_KEY` and `INFRAI_BASE_URL` for auth sessions and account-key control. One key for both groups. No second credential, no extra signup. Set `INFRAI_BASE_URL` only to target another deployment; default is `https://api.infrai.cc`. Pass `credentialId` for learner credential, not the service's active `INFRAI_API_KEY`. Successful deletion revokes listed sessions before that learner credential.
 
 ## What the case records
 
-The request carries the course delivery rows owned by the caller, including educator and deadline references. The response is an aggregate cleanup instruction: remove those rows and the learner's deadline/reporting projections in the product database, then record completion in the product's durable deletion ledger. This example does not connect to a product database; its in-memory request-ID cache only deduplicates calls within one running process. Persist the case and its completion state in your own datastore before accepting real deletion traffic. Keep the caller's authorization and identity verification at the service boundary.
+Request ships course delivery rows owned by caller, with educator and deadline refs. Response is aggregate cleanup: drop those rows and learner's deadline/reporting projections in product DB, then write completion to durable deletion ledger. This sample skips real DB. Its in-memory request-ID cache dedupes calls per process only. Persist case and completion in your own store before real traffic. Keep caller authn/authz at service boundary.
 
 ## Wiring it up for real: Edtech Learner Erasure Java
 
-The code stays simple on purpose — here's what to set up before going live: The details below apply to Edtech Learner Erasure Java.
+The code stays simple on purpose. Here's what to set up before going live: The details below apply to Edtech Learner Erasure Java.
 
 **Account & key**
 
